@@ -1,11 +1,12 @@
 import { type ChangeEvent, useState } from 'react'
 
 function ColorConverter() {
-  const [hex, setHex] = useState('#9921ff')
+  const [hex, setHex] = useState('')
   const [backgroundColor, setBackgroundColor] = useState('#9921ff')
   const [error, setError] = useState(false)
-  
-  const HEX_REGEX = /^#[0-9a-fA-F]{6}$/
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const HEX_REGEX = /^#[0-9a-f]{6}$/i
 
   const hexToRgb = (hex: string): string => {
     const r = parseInt(hex.slice(1, 3), 16)
@@ -15,23 +16,39 @@ function ColorConverter() {
   }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+    const value = e.target.value.toLowerCase()
     setHex(value)
 
-    if (value.length !== 7) {
+    if (value === '') {
       setError(false)
+      setErrorMessage('')
       return
     }
 
-    if (HEX_REGEX.test(value)) {
-      setBackgroundColor(value)
-      setError(false)
-    } else {
+    if (!value.startsWith('#')) {
       setError(true)
+      setErrorMessage('Должен начинаться с #')
+      return
     }
+
+    if (value.length < 7) {
+      setError(true)
+      setErrorMessage('Не хватает символов')
+      return
+    }
+
+    if (!HEX_REGEX.test(value)) {
+      setError(true)
+      setErrorMessage('Неправильные символы')
+      return
+    }
+
+    setBackgroundColor(value)
+    setError(false)
+    setErrorMessage('')
   }
 
-  const displayText = hex.length !== 7 ? hexToRgb(backgroundColor) : error ? 'Ошибка!' : hexToRgb(hex)
+  const displayText = error ? errorMessage : hex.length > 0 ? hexToRgb(hex) : hexToRgb(backgroundColor)
 
   return (
     <div className="app" style={{ backgroundColor }}>
@@ -41,7 +58,8 @@ function ColorConverter() {
           className="input-field"
           value={hex}
           onChange={handleChange}
-          placeholder="Введите код цвета..."
+          maxLength={7}
+          placeholder="Введите HEX-код"
         />
         <span className={`result ${error ? 'error' : ''}`}>{displayText}</span>
       </label>
